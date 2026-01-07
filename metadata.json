@@ -1,7 +1,0 @@
-{
-  "name": "Macramé Store - Handmade Art",
-  "description": "A sophisticated e-commerce platform for handmade macramé products, featuring a full shopping experience and an administrative panel for product management.",
-  "requestFramePermissions": [
-    "camera"
-  ]
-}
