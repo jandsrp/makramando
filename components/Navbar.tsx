@@ -9,9 +9,10 @@ interface NavbarProps {
   navigateTo: (view: View) => void;
   cartCount: number;
   session: Session | null;
+  profile?: any | null;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ currentView, navigateTo, cartCount, session }) => {
+const Navbar: React.FC<NavbarProps> = ({ currentView, navigateTo, cartCount, session, profile }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -24,8 +25,11 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, navigateTo, cartCount, ses
     { label: 'Loja', view: 'shop' },
     { label: 'Sobre', view: 'about' },
     { label: 'Contato', view: 'contact' },
-    { label: 'Admin', view: 'admin' },
   ];
+
+  if (profile?.role === 'admin') {
+    navItems.push({ label: 'Admin', view: 'admin' });
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-surface-dark/95 backdrop-blur-md">
@@ -54,6 +58,15 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, navigateTo, cartCount, ses
 
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center gap-4">
+          {session && (
+            <button
+              onClick={() => navigateTo('account')}
+              className="flex items-center justify-center size-10 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-primary/20 transition-colors"
+              title="Minha Conta"
+            >
+              <span className="material-symbols-outlined text-xl">person</span>
+            </button>
+          )}
           <button
             onClick={() => navigateTo('cart')}
             className="flex items-center justify-center size-10 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-primary/20 transition-colors relative"
@@ -111,6 +124,12 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, navigateTo, cartCount, ses
             </button>
           ))}
           <div className="flex gap-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+            <button
+              onClick={() => { navigateTo('account'); setMobileMenuOpen(false); }}
+              className={`text-left px-4 py-3 rounded-lg font-medium ${currentView === 'account' ? 'bg-primary/10 text-primary' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
+            >
+              Minha Conta
+            </button>
             <button
               onClick={() => { navigateTo('cart'); setMobileMenuOpen(false); }}
               className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-black font-bold"

@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../../services/supabase';
 import { Product } from '../../types';
+import { generateProductDescription } from '../../services/geminiService';
 
 interface ProductFormProps {
     onSuccess: () => void;
@@ -121,7 +122,21 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel, p
                     </label>
 
                     <label className="flex flex-col gap-2">
-                        <span className="text-sm font-bold dark:text-white">Descrição</span>
+                        <div className="flex justify-between items-center">
+                            <span className="text-sm font-bold dark:text-white">Descrição</span>
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    if (!formData.name) return alert('Digite o nome do produto primeiro.');
+                                    const desc = await generateProductDescription(formData.name, [formData.category, formData.color]);
+                                    setFormData(prev => ({ ...prev, description: desc }));
+                                }}
+                                className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+                            >
+                                <span className="material-symbols-outlined text-sm">auto_awesome</span>
+                                Gerar com IA
+                            </button>
+                        </div>
                         <textarea
                             required
                             rows={4}

@@ -22,7 +22,7 @@ const Footer: React.FC<FooterProps> = ({ navigateTo }) => {
           <button onClick={() => navigateTo('about')} className="hover:text-primary transition-colors">Sobre</button>
           <button onClick={() => navigateTo('contact')} className="hover:text-primary transition-colors">Contato</button>
         </div>
-        <p className="text-sm text-gray-400 dark:text-gray-600">© 2024 Macramê Store. Todos os direitos reservados.</p>
+        <p className="text-sm text-gray-400 dark:text-gray-600">© 2024 Makramando. Todos os direitos reservados.</p>
       </div>
     </footer>
   );

@@ -12,6 +12,7 @@ import Admin from './pages/Admin';
 import Contact from './pages/Contact';
 import About from './pages/About';
 import Auth from './pages/Auth';
+import Account from './pages/Account';
 import { supabase } from './services/supabase';
 import { Session } from '@supabase/supabase-js';
 
@@ -80,6 +81,7 @@ const App: React.FC = () => {
     return saved ? JSON.parse(saved) : [];
   });
   const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -94,6 +96,22 @@ const App: React.FC = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (session?.user) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        setProfile(data);
+      } else {
+        setProfile(null);
+      }
+    };
+    fetchProfile();
+  }, [session]);
 
   useEffect(() => {
     localStorage.setItem('macrame_products', JSON.stringify(products));
@@ -146,24 +164,29 @@ const App: React.FC = () => {
     products.find(p => p.id === selectedProductId),
     [products, selectedProductId]);
 
+  const clearCart = () => {
+    setCart([]);
+  };
+
   const renderContent = () => {
     switch (currentView) {
       case 'home': return <Home products={products} navigateTo={navigateTo} />;
       case 'shop': return <Shop products={products} navigateTo={navigateTo} />;
       case 'product': return selectedProduct ? <ProductDetail product={selectedProduct} addToCart={addToCart} navigateTo={navigateTo} /> : <Home products={products} navigateTo={navigateTo} />;
       case 'cart': return <Cart cart={cart} removeFromCart={removeFromCart} updateQuantity={updateQuantity} navigateTo={navigateTo} />;
-      case 'checkout': return <Checkout cart={cart} navigateTo={navigateTo} />;
+      case 'checkout': return <Checkout cart={cart} navigateTo={navigateTo} clearCart={clearCart} />;
       case 'admin': return <Admin products={products} addProduct={addProduct} setProducts={setProducts} />;
       case 'contact': return <Contact />;
       case 'about': return <About navigateTo={navigateTo} />;
       case 'auth': return <Auth navigateTo={navigateTo} />;
+      case 'account': return <Account session={session} navigateTo={navigateTo} />;
       default: return <Home products={products} navigateTo={navigateTo} />;
     }
   };
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Navbar currentView={currentView} navigateTo={navigateTo} cartCount={cart.reduce((acc, item) => acc + item.quantity, 0)} session={session} />
+      <Navbar currentView={currentView} navigateTo={navigateTo} cartCount={cart.reduce((acc, item) => acc + item.quantity, 0)} session={session} profile={profile} />
       <main className="flex-grow">
         {renderContent()}
       </main>

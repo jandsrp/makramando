@@ -4,21 +4,21 @@ import React, { useState, useEffect } from 'react';
 const SLIDES = [
     {
         id: 1,
-        image: 'https://images.unsplash.com/photo-1596282855529-650058e0a324?q=80&w=2070&auto=format&fit=crop',
-        title: 'Transforme seu espaço com Macramê',
-        subtitle: 'Artesanato autêntico em nós e tramas, trazendo aconchego e personalidade.'
+        image: '/hero-wall-panel.png',
+        title: 'Painel de Macramê Exclusivo',
+        subtitle: 'Arte autêntica em nós e tramas, trazendo elegância e personalidade para sua sala.'
     },
     {
         id: 2,
-        image: 'https://images.unsplash.com/photo-1590736969955-71cc94801759?q=80&w=2070&auto=format&fit=crop',
-        title: 'Arte e Natureza em Harmonia',
-        subtitle: 'Suportes para plantas que dão vida nova ao seu jardim interno.'
+        image: '/hero-plant-hanger.png',
+        title: 'Suportes para Plantas',
+        subtitle: 'Dê vida nova ao seu jardim interno com suportes tecidos à mão com alma.'
     },
     {
         id: 3,
-        image: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?q=80&w=2070&auto=format&fit=crop',
-        title: 'Detalhes que Encantam',
-        subtitle: 'Cada peça é única, feita à mão com algodão 100% orgânico.'
+        image: '/hero-table-set.png',
+        title: 'Mesa Posta com Charme',
+        subtitle: 'Sousplat e porta-copos em macramê para momentos inesquecíveis em família.'
     }
 ];
 

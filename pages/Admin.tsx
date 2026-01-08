@@ -12,11 +12,12 @@ interface AdminProps {
 
 const Admin: React.FC<AdminProps> = ({ products: initialProducts, setProducts: setGlobalProducts }) => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'products' | 'orders'>('products');
   const [isAdding, setIsAdding] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch products specific to Admin interaction (or just reuse global)
-  // Here we fetch to ensure we have latest data
   const fetchProducts = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -24,108 +25,173 @@ const Admin: React.FC<AdminProps> = ({ products: initialProducts, setProducts: s
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error(error);
-    } else {
+    if (!error) {
       setProducts(data || []);
-      setGlobalProducts(data || []); // Sync with App
+      setGlobalProducts(data || []);
+    }
+    setLoading(false);
+  };
+
+  const fetchOrders = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('orders')
+      .select(`
+        *,
+        profiles (full_name),
+        order_items (
+          *,
+          products (name)
+        )
+      `)
+      .order('created_at', { ascending: false });
+
+    if (!error) {
+      setOrders(data || []);
     }
     setLoading(false);
   };
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    if (activeTab === 'products') {
+      fetchProducts();
+    } else {
+      fetchOrders();
+    }
+  }, [activeTab]);
 
   const handleDelete = async (id: string) => {
     if (window.confirm('Deseja realmente excluir este produto?')) {
       const { error } = await supabase.from('products').delete().eq('id', id);
-      if (error) {
-        alert('Erro ao excluir produto.');
-        console.error(error);
-      } else {
-        fetchProducts();
-      }
+      if (!error) fetchProducts();
     }
+  };
+
+  const handleEdit = (product: Product) => {
+    setEditingProduct(product);
+    setIsAdding(true);
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-10 py-10">
-      <div className="flex justify-between items-center mb-10">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
         <div>
           <h1 className="text-4xl font-black dark:text-white">Painel Administrativo</h1>
-          <p className="text-gray-500 mt-2">Gerencie seu inventário de macramê.</p>
+          <p className="text-gray-500 mt-2">Gerencie sua loja de macramê.</p>
         </div>
-        <button
-          onClick={() => setIsAdding(!isAdding)}
-          className="bg-primary hover:bg-primary-dark text-black font-bold py-3 px-8 rounded-xl flex items-center gap-2 shadow-lg"
-        >
-          <span className="material-symbols-outlined">{isAdding ? 'close' : 'add'}</span>
-          {isAdding ? 'Cancelar' : 'Novo Produto'}
-        </button>
+        <div className="flex gap-4">
+          <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+            <button
+              onClick={() => setActiveTab('products')}
+              className={`px-6 py-2 rounded-lg font-bold transition-all ${activeTab === 'products' ? 'bg-white dark:bg-gray-700 text-primary shadow-sm' : 'text-gray-500'}`}
+            >
+              Produtos
+            </button>
+            <button
+              onClick={() => setActiveTab('orders')}
+              className={`px-6 py-2 rounded-lg font-bold transition-all ${activeTab === 'orders' ? 'bg-white dark:bg-gray-700 text-primary shadow-sm' : 'text-gray-500'}`}
+            >
+              Pedidos
+            </button>
+          </div>
+          {activeTab === 'products' && (
+            <button
+              onClick={() => { setIsAdding(!isAdding); setEditingProduct(null); }}
+              className="bg-primary hover:bg-primary-dark text-black font-bold py-3 px-8 rounded-xl flex items-center gap-2 shadow-lg"
+            >
+              <span className="material-symbols-outlined">{isAdding ? 'close' : 'add'}</span>
+              {isAdding ? 'Cancelar' : 'Novo Produto'}
+            </button>
+          )}
+        </div>
       </div>
 
-      {isAdding && (
+      {isAdding && activeTab === 'products' && (
         <ProductForm
-          onSuccess={() => { setIsAdding(false); fetchProducts(); }}
-          onCancel={() => setIsAdding(false)}
+          product={editingProduct}
+          onSuccess={() => { setIsAdding(false); setEditingProduct(null); fetchProducts(); }}
+          onCancel={() => { setIsAdding(false); setEditingProduct(null); }}
         />
       )}
 
-      {/* Product Table */}
       <div className="bg-white dark:bg-surface-dark border border-gray-100 dark:border-gray-800 rounded-3xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-gray-50 dark:bg-gray-800">
-              <tr className="border-b border-gray-100 dark:border-gray-800">
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider dark:text-white">Produto</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider dark:text-white">Categoria</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider dark:text-white">Preço</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider dark:text-white text-center">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {loading ? (
-                <tr>
-                  <td colSpan={4} className="px-6 py-8 text-center text-gray-500">Carregando produtos...</td>
+        {activeTab === 'products' ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-gray-50 dark:bg-gray-800">
+                <tr className="border-b border-gray-100 dark:border-gray-800">
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider dark:text-white">Produto</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider dark:text-white">Categoria</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider dark:text-white">Preço</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider dark:text-white text-center">Ações</th>
                 </tr>
-              ) : products.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="px-6 py-8 text-center text-gray-500">Nenhum produto cadastrado.</td>
-                </tr>
-              ) : (
-                products.map(p => (
-                  <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-4">
-                        <div className="size-12 rounded-lg bg-gray-100 overflow-hidden">
-                          {p.image_url ? (
-                            <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400">
-                              <span className="material-symbols-outlined text-sm">image</span>
-                            </div>
-                          )}
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                {loading ? (
+                  <tr><td colSpan={4} className="px-6 py-8 text-center text-gray-500">Carregando...</td></tr>
+                ) : products.length === 0 ? (
+                  <tr><td colSpan={4} className="px-6 py-8 text-center text-gray-500">Nenhum produto.</td></tr>
+                ) : (
+                  products.map(p => (
+                    <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-4">
+                          <img src={p.image_url || ''} className="size-12 rounded-lg object-cover bg-gray-100" />
+                          <span className="font-bold dark:text-white">{p.name}</span>
                         </div>
-                        <span className="font-bold dark:text-white">{p.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{p.category}</td>
-                    <td className="px-6 py-4 text-sm font-bold text-primary">R$ {p.price.toFixed(2)}</td>
-                    <td className="px-6 py-4 text-center">
-                      <button
-                        onClick={() => handleDelete(p.id)}
-                        className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                      >
-                        <span className="material-symbols-outlined">delete</span>
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">{p.category}</td>
+                      <td className="px-6 py-4 text-sm font-bold text-primary">R$ {p.price.toFixed(2)}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex justify-center gap-2">
+                          <button onClick={() => handleEdit(p)} className="p-2 text-gray-400 hover:text-primary"><span className="material-symbols-outlined">edit</span></button>
+                          <button onClick={() => handleDelete(p.id)} className="p-2 text-gray-400 hover:text-red-500"><span className="material-symbols-outlined">delete</span></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-gray-50 dark:bg-gray-800">
+                <tr className="border-b border-gray-100 dark:border-gray-800">
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider dark:text-white">ID Pedido</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider dark:text-white">Cliente</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider dark:text-white">Data</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider dark:text-white">Total</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider dark:text-white text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                {loading ? (
+                  <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">Carregando...</td></tr>
+                ) : orders.length === 0 ? (
+                  <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">Nenhum pedido.</td></tr>
+                ) : (
+                  orders.map(o => (
+                    <tr key={o.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-sm">
+                      <td className="px-6 py-4 font-mono text-xs text-gray-500">#{o.id.slice(0, 8)}</td>
+                      <td className="px-6 py-4 dark:text-white">{o.profiles?.full_name || 'Desconhecido'}</td>
+                      <td className="px-6 py-4 text-gray-500">{new Date(o.created_at).toLocaleDateString()}</td>
+                      <td className="px-6 py-4 font-bold text-primary">R$ {o.total_amount.toFixed(2)}</td>
+                      <td className="px-6 py-4 text-center">
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${o.status === 'paid' ? 'bg-green-100 text-green-700' :
+                          o.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700'
+                          }`}>
+                          {o.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
