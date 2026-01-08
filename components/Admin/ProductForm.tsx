@@ -13,6 +13,7 @@ interface ProductFormProps {
 export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel, product }) => {
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [generatingDescription, setGeneratingDescription] = useState(false);
     const [formData, setFormData] = useState({
         name: product?.name || '',
         description: product?.description || '',
@@ -126,15 +127,23 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel, p
                             <span className="text-sm font-bold dark:text-white">Descrição</span>
                             <button
                                 type="button"
+                                disabled={generatingDescription}
                                 onClick={async () => {
                                     if (!formData.name) return alert('Digite o nome do produto primeiro.');
-                                    const desc = await generateProductDescription(formData.name, [formData.category, formData.color]);
-                                    setFormData(prev => ({ ...prev, description: desc }));
+                                    setGeneratingDescription(true);
+                                    try {
+                                        const desc = await generateProductDescription(formData.name, [formData.category, formData.color]);
+                                        setFormData(prev => ({ ...prev, description: desc }));
+                                    } finally {
+                                        setGeneratingDescription(false);
+                                    }
                                 }}
-                                className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+                                className="text-xs font-bold text-primary hover:underline flex items-center gap-1 disabled:opacity-50"
                             >
-                                <span className="material-symbols-outlined text-sm">auto_awesome</span>
-                                Gerar com IA
+                                <span className={`material-symbols-outlined text-sm ${generatingDescription ? 'animate-spin' : ''}`}>
+                                    {generatingDescription ? 'sync' : 'auto_awesome'}
+                                </span>
+                                {generatingDescription ? 'Gerando...' : 'Gerar com IA'}
                             </button>
                         </div>
                         <textarea
