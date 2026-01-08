@@ -43,9 +43,9 @@ const Auth: React.FC<AuthProps> = ({ navigateTo }) => {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 py-12">
-            <Reveal>
-                <div className="w-full max-w-md bg-white dark:bg-surface-dark p-8 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800">
+        <div className="flex flex-col items-center justify-center min-h-[80vh] px-4 py-12">
+            <Reveal width="fit-content">
+                <div className="w-full max-w-md bg-white dark:bg-surface-dark p-10 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800">
                     <div className="text-center mb-8">
                         <h2 className="text-3xl font-black text-primary mb-2">
                             {isSignUp ? 'Criar Conta' : 'Bem-vindo'}

@@ -20,14 +20,12 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, navigateTo, clearCart }) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
 
-      // Basic validation
       if (!session) {
         alert('Por favor, faça login para finalizar a compra.');
         navigateTo('auth');
         return;
       }
 
-      // 1. Create Order
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -40,7 +38,6 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, navigateTo, clearCart }) => {
 
       if (orderError) throw orderError;
 
-      // 2. Create Order Items
       const orderItems = cart.map(item => ({
         order_id: order.id,
         product_id: item.id,
@@ -67,7 +64,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, navigateTo, clearCart }) => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-20 text-center flex flex-col items-center gap-8">
-      <Reveal>
+      <Reveal width="fit-content">
         <div className="flex flex-col items-center gap-8">
           <div className="size-24 bg-primary/20 rounded-full flex items-center justify-center text-primary animate-bounce">
             <span className="material-symbols-outlined text-5xl">task_alt</span>
@@ -81,8 +78,8 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, navigateTo, clearCart }) => {
         </div>
       </Reveal>
 
-      <Reveal delay={0.1} className="w-full max-w-md">
-        <div className="bg-white dark:bg-surface-dark border border-gray-100 dark:border-gray-800 rounded-3xl p-8 shadow-xl">
+      <Reveal delay={0.1} width="fit-content">
+        <div className="bg-white dark:bg-surface-dark border border-gray-100 dark:border-gray-800 rounded-3xl p-8 shadow-xl w-full max-w-md">
           <h2 className="text-xl font-bold mb-4 dark:text-white">Resumo do Pedido</h2>
           <div className="flex flex-col gap-2 mb-6">
             {cart.map(item => (
@@ -106,7 +103,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, navigateTo, clearCart }) => {
         </div>
       </Reveal>
 
-      <Reveal delay={0.2}>
+      <Reveal delay={0.2} width="fit-content">
         <button
           onClick={() => navigateTo('cart')}
           className="text-gray-500 hover:text-primary font-bold flex items-center gap-2"
