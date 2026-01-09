@@ -3,8 +3,19 @@ import { GoogleGenAI } from "@google/genai";
 
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
-// Initialize the SDK
-const genAI = new GoogleGenAI(apiKey || 'MISSING_KEY');
+// Lazy initialization of GenAI to prevent fatal error on import if API key is missing
+let genAI: GoogleGenAI | null = null;
+
+const getGenAI = () => {
+  if (!genAI) {
+    if (!apiKey) {
+      console.warn("Gemini: API Key is missing. Geminiservice will return fallbacks.");
+      return null;
+    }
+    genAI = new GoogleGenAI(apiKey);
+  }
+  return genAI;
+};
 
 export const generateProductDescription = async (productName: string, features: string[]): Promise<string> => {
   if (!apiKey) {
@@ -13,8 +24,12 @@ export const generateProductDescription = async (productName: string, features: 
   }
 
   try {
+    const ai = getGenAI();
+    if (!ai) {
+      return "Um toque de arte e sofisticação para o seu lar. (Chave API não configurada)";
+    }
     // Standard pattern for most Google Generative AI SDKs
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const prompt = `Gere uma descrição atraente em português para um produto de macramê chamado "${productName}" com as seguintes características: ${features.join(', ')}. Seja conciso e focado em artesanato.`;
 
