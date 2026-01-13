@@ -15,6 +15,8 @@ import Auth from './pages/Auth';
 import Account from './pages/Account';
 import { supabase } from './services/supabase';
 import { Session } from '@supabase/supabase-js';
+import { useAuth } from './hooks/useAuth';
+import { useCart } from './hooks/useCart';
 
 // Initial Mock Data
 // Initial Mock Data
@@ -76,50 +78,8 @@ const App: React.FC = () => {
     fetchProducts();
   }, []);
 
-  const [cart, setCart] = useState<CartItem[]>(() => {
-    const saved = localStorage.getItem('macrame_cart');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<any>(null);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      if (session?.user) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        setProfile(data);
-      } else {
-        setProfile(null);
-      }
-    };
-    fetchProfile();
-  }, [session]);
-
-  useEffect(() => {
-    localStorage.setItem('macrame_products', JSON.stringify(products));
-  }, [products]);
-
-  useEffect(() => {
-    localStorage.setItem('macrame_cart', JSON.stringify(cart));
-  }, [cart]);
+  const { session, profile } = useAuth();
+  const { cart, addToCart, removeFromCart, updateQuantity, clearCart } = useCart(session);
 
   const navigateTo = (view: View, productId?: string) => {
     setCurrentView(view);
@@ -129,33 +89,6 @@ const App: React.FC = () => {
     window.scrollTo(0, 0);
   };
 
-  const addToCart = (product: Product, quantity: number) => {
-    setCart(prev => {
-      // Logic simplified: same product ID = same item (ignoring variant selection for now as we flattened it)
-      const existing = prev.find(item => item.id === product.id);
-      if (existing) {
-        return prev.map(item =>
-          item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item
-        );
-      }
-      return [...prev, { ...product, quantity }];
-    });
-    navigateTo('cart');
-  };
-
-  const removeFromCart = (id: string) => {
-    setCart(prev => prev.filter(item => item.id !== id));
-  };
-
-  const updateQuantity = (id: string, delta: number) => {
-    setCart(prev => prev.map(item => {
-      if (item.id === id) {
-        return { ...item, quantity: Math.max(1, item.quantity + delta) };
-      }
-      return item;
-    }));
-  };
-
   const addProduct = (product: Product) => {
     setProducts(prev => [product, ...prev]);
   };
@@ -163,10 +96,6 @@ const App: React.FC = () => {
   const selectedProduct = useMemo(() =>
     products.find(p => p.id === selectedProductId),
     [products, selectedProductId]);
-
-  const clearCart = () => {
-    setCart([]);
-  };
 
   const renderContent = () => {
     switch (currentView) {

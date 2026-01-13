@@ -44,6 +44,16 @@ export interface CartItem extends Product {
   quantity: number;
 }
 
+export interface Cart {
+  id: string;
+  user_id: string;
+  product_id: string;
+  quantity: number;
+  created_at: string;
+  updated_at: string;
+  product?: Product;
+}
+
 export type View = 'home' | 'shop' | 'product' | 'cart' | 'checkout' | 'admin' | 'contact' | 'about' | 'auth' | 'account';
 
 export interface AppState {
@@ -51,5 +61,12 @@ export interface AppState {
   selectedProductId: string | null;
   products: Product[];
   cart: CartItem[];
+}
+
+export interface AuthContextType {
+  session: any | null;
+  profile: Profile | null;
+  isAdmin: boolean;
+  isLoading: boolean;
 }
 

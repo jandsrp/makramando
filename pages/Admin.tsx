@@ -1,8 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { Product } from '../types';
+import { Product, Profile } from '../types';
 import { supabase } from '../services/supabase';
 import { ProductForm } from '../components/Admin/ProductForm';
+import { UserManagement } from '../components/Admin/UserManagement';
+import { useAdmin } from '../hooks/useAdmin';
 
 interface AdminProps {
   products: Product[]; // Currently passing prop but we might want to refetch for admin specifics
@@ -11,12 +13,30 @@ interface AdminProps {
 }
 
 const Admin: React.FC<AdminProps> = ({ products: initialProducts, setProducts: setGlobalProducts }) => {
+  const { isAdmin, isLoading: adminLoading } = useAdmin();
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'products' | 'orders'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'users'>('products');
   const [isAdding, setIsAdding] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<Profile | null>(null);
+
+  // Fetch current user profile
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        setProfile(data);
+      }
+    };
+    fetchProfile();
+  }, []);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -72,6 +92,30 @@ const Admin: React.FC<AdminProps> = ({ products: initialProducts, setProducts: s
     setIsAdding(true);
   };
 
+  // Show loading while checking admin status
+  if (adminLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <div className="size-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  // Show access denied if not admin
+  if (!isAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
+        <div className="size-20 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center text-red-500 mb-6">
+          <span className="material-symbols-outlined text-4xl">block</span>
+        </div>
+        <h2 className="text-3xl font-black dark:text-white mb-4">Acesso Negado</h2>
+        <p className="text-gray-500 text-center max-w-md">
+          Você não tem permissão para acessar o painel administrativo. Apenas administradores podem visualizar este conteúdo.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-10 py-10">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
@@ -92,6 +136,12 @@ const Admin: React.FC<AdminProps> = ({ products: initialProducts, setProducts: s
               className={`px-6 py-2 rounded-lg font-bold transition-all ${activeTab === 'orders' ? 'bg-white dark:bg-gray-700 text-primary shadow-sm' : 'text-gray-500'}`}
             >
               Pedidos
+            </button>
+            <button
+              onClick={() => setActiveTab('users')}
+              className={`px-6 py-2 rounded-lg font-bold transition-all ${activeTab === 'users' ? 'bg-white dark:bg-gray-700 text-primary shadow-sm' : 'text-gray-500'}`}
+            >
+              Usuários
             </button>
           </div>
           {activeTab === 'products' && (
@@ -154,7 +204,7 @@ const Admin: React.FC<AdminProps> = ({ products: initialProducts, setProducts: s
               </tbody>
             </table>
           </div>
-        ) : (
+        ) : activeTab === 'orders' ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead className="bg-gray-50 dark:bg-gray-800">
@@ -191,7 +241,9 @@ const Admin: React.FC<AdminProps> = ({ products: initialProducts, setProducts: s
               </tbody>
             </table>
           </div>
-        )}
+        ) : activeTab === 'users' ? (
+          <UserManagement currentUserProfile={profile} />
+        ) : null}
       </div>
     </div>
   );

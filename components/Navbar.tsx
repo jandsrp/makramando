@@ -59,13 +59,20 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, navigateTo, cartCount, ses
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center gap-4">
           {session && (
-            <button
-              onClick={() => navigateTo('account')}
-              className="flex items-center justify-center size-10 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-primary/20 transition-colors"
-              title="Minha Conta"
-            >
-              <span className="material-symbols-outlined text-xl">person</span>
-            </button>
+            <>
+              <button
+                onClick={() => navigateTo('account')}
+                className="flex items-center justify-center size-10 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-primary/20 transition-colors"
+                title="Minha Conta"
+              >
+                <span className="material-symbols-outlined text-xl">person</span>
+              </button>
+              {profile?.role === 'admin' && (
+                <span className="px-3 py-1 bg-primary/20 text-primary text-xs font-black uppercase rounded-full border border-primary/30">
+                  Admin
+                </span>
+              )}
+            </>
           )}
           <button
             onClick={() => navigateTo('cart')}

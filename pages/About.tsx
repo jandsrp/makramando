@@ -32,10 +32,10 @@ const About: React.FC<AboutProps> = ({ navigateTo }) => {
                   <div className="order-2 md:order-1 flex flex-col gap-6">
                      <h2 className="text-4xl font-black dark:text-white">Nossa História</h2>
                      <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
-                        Tudo começou em uma tarde chuvosa, com apenas um rolo de barbante e muita curiosidade. O que era um passatempo para acalmar a mente virou nossa forma de expressar arte.
+                        Tudo começou em uma tarde chuvosa, com apenas um rolo de barbante e muita curiosidade. O que era um passatempo para acalmar a mente virou minha forma de expressar arte.
                      </p>
                      <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
-                        Descobrimos que entrelaçar fios é mais do que criar formas; é tecer conexões. Hoje, cada peça que sai do nosso ateliê leva um pouco dessa tranquilidade e beleza para lares em todo o país.
+                        Descobri que entrelaçar fios é mais do que criar formas; é tecer conexões. Hoje, cada peça que sai do ateliê leva um pouco dessa tranquilidade e beleza para lares em todo o país.
                      </p>
                      <div className="flex gap-4 pt-4">
                         <div className="flex flex-col items-center">
@@ -55,8 +55,8 @@ const About: React.FC<AboutProps> = ({ navigateTo }) => {
                      </div>
                   </div>
                   <div className="order-1 md:order-2">
-                     <div className="aspect-square rounded-3xl overflow-hidden shadow-2xl rotate-2 hover:rotate-0 transition-transform duration-500">
-                        <img src="https://picsum.photos/1000/1000?random=artisan" className="w-full h-full object-cover" alt="Artesã" />
+                     <div className="aspect-square rounded-3xl overflow-hidden shadow-2xl">
+                        <img src="/assets/macrame-lamp-balcony.jpg" className="w-full h-full object-cover" alt="Luminária de Macramê" />
                      </div>
                   </div>
                </div>

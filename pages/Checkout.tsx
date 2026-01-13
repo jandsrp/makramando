@@ -6,12 +6,29 @@ import { Reveal } from '../components/UI/Reveal';
 interface CheckoutProps {
   cart: CartItem[];
   navigateTo: (view: View) => void;
-  clearCart: () => void;
+  clearCart: () => void | Promise<void>;
 }
 
 const Checkout: React.FC<CheckoutProps> = ({ cart, navigateTo, clearCart }) => {
   const [loading, setLoading] = React.useState(false);
+  const [session, setSession] = React.useState<any>(null);
+  const [checkingAuth, setCheckingAuth] = React.useState(true);
   const total = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+
+  // Check authentication on mount
+  React.useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+      setCheckingAuth(false);
+
+      if (!session) {
+        alert('Você precisa estar logado para finalizar a compra.');
+        navigateTo('auth');
+      }
+    };
+    checkAuth();
+  }, [navigateTo]);
 
   const handleConfirmPayment = async () => {
     if (cart.length === 0) return;
@@ -52,7 +69,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, navigateTo, clearCart }) => {
       if (itemsError) throw itemsError;
 
       alert('Pedido realizado com sucesso!');
-      clearCart();
+      await clearCart();
       navigateTo('home');
     } catch (error) {
       console.error('Error creating order:', error);
@@ -61,6 +78,20 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, navigateTo, clearCart }) => {
       setLoading(false);
     }
   };
+
+  // Show loading while checking authentication
+  if (checkingAuth) {
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <div className="size-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  // Don't render if not authenticated (will redirect)
+  if (!session) {
+    return null;
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-20 text-center flex flex-col items-center gap-8">
