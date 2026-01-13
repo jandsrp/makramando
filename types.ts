@@ -20,7 +20,7 @@ export interface Profile {
   id: string;
   full_name: string | null;
   phone: string | null;
-  role: 'admin' | 'customer';
+  role: 'admin' | 'master_admin' | 'customer';
 }
 
 export interface Order {

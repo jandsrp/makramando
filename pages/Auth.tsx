@@ -11,8 +11,12 @@ const Auth: React.FC<AuthProps> = ({ navigateTo }) => {
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [fullName, setFullName] = useState('');
+    const [phone, setPhone] = useState('');
     const [isSignUp, setIsSignUp] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     const handleAuth = async (e: React.FormEvent) => {
@@ -22,12 +26,27 @@ const Auth: React.FC<AuthProps> = ({ navigateTo }) => {
 
         try {
             if (isSignUp) {
+                if (password !== confirmPassword) {
+                    throw new Error('As senhas não coincidem.');
+                }
+
+                if (password.length < 6) {
+                    throw new Error('A senha deve ter pelo menos 6 caracteres.');
+                }
+
                 const { error } = await supabase.auth.signUp({
                     email,
                     password,
+                    options: {
+                        data: {
+                            full_name: fullName,
+                            phone: phone,
+                        }
+                    }
                 });
                 if (error) throw error;
                 setMessage({ type: 'success', text: 'Verifique seu email para confirmar o cadastro!' });
+                setIsSignUp(false); // Switch to login after successful signup logic if desired, or just show message
             } else {
                 const { error } = await supabase.auth.signInWithPassword({
                     email,
@@ -66,6 +85,37 @@ const Auth: React.FC<AuthProps> = ({ navigateTo }) => {
                     )}
 
                     <form onSubmit={handleAuth} className="flex flex-col gap-4">
+                        {isSignUp && (
+                            <>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                                        Nome Completo
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={fullName}
+                                        onChange={(e) => setFullName(e.target.value)}
+                                        required
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                                        placeholder="Seu nome completo"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                                        Telefone Celular
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        value={phone}
+                                        onChange={(e) => setPhone(e.target.value)}
+                                        required
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                                        placeholder="(11) 99999-9999"
+                                    />
+                                </div>
+                            </>
+                        )}
+
                         <div>
                             <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
                                 Email
@@ -105,6 +155,34 @@ const Auth: React.FC<AuthProps> = ({ navigateTo }) => {
                                 </button>
                             </div>
                         </div>
+
+                        {isSignUp && (
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                                    Confirmar Senha
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type={showConfirmPassword ? 'text' : 'password'}
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        required
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all pr-12"
+                                        placeholder="Confirme sua senha"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors flex items-center justify-center p-1"
+                                        title={showConfirmPassword ? 'Esconder senha' : 'Ver senha'}
+                                    >
+                                        <span className="material-symbols-outlined text-xl">
+                                            {showConfirmPassword ? 'visibility_off' : 'visibility'}
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
 
                         <button
                             type="submit"

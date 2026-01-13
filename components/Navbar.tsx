@@ -27,7 +27,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, navigateTo, cartCount, ses
     { label: 'Contato', view: 'contact' },
   ];
 
-  if (profile?.role === 'admin') {
+  if (profile?.role === 'admin' || profile?.role === 'master_admin') {
     navItems.push({ label: 'Admin', view: 'admin' });
   }
 
@@ -67,9 +67,9 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, navigateTo, cartCount, ses
               >
                 <span className="material-symbols-outlined text-xl">person</span>
               </button>
-              {profile?.role === 'admin' && (
+              {(profile?.role === 'admin' || profile?.role === 'master_admin') && (
                 <span className="px-3 py-1 bg-primary/20 text-primary text-xs font-black uppercase rounded-full border border-primary/30">
-                  Admin
+                  {profile?.role === 'master_admin' ? 'Master' : 'Admin'}
                 </span>
               )}
             </>

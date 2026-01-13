@@ -131,12 +131,14 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserProfi
                                 </td>
                                 <td className="px-6 py-4">
                                     <span
-                                        className={`px-3 py-1 rounded-full text-xs font-black uppercase ${user.role === 'admin'
+                                        className={`px-3 py-1 rounded-full text-xs font-black uppercase ${user.role === 'master_admin'
+                                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                                            : user.role === 'admin'
                                                 ? 'bg-primary/20 text-primary'
                                                 : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
                                             }`}
                                     >
-                                        {user.role === 'admin' ? 'Administrador' : 'Cliente'}
+                                        {user.role === 'master_admin' ? 'Master Admin' : user.role === 'admin' ? 'Administrador' : 'Cliente'}
                                     </span>
                                 </td>
                                 <td className="px-6 py-4">
@@ -155,9 +157,15 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserProfi
                                         ) : (
                                             <button
                                                 onClick={() => handleDemoteToCustomer(user.id)}
-                                                disabled={actionLoading === user.id || user.id === currentUserProfile?.id}
+                                                disabled={actionLoading === user.id || user.id === currentUserProfile?.id || user.role === 'master_admin'}
                                                 className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-bold rounded-lg transition-all disabled:opacity-50 flex items-center gap-1"
-                                                title={user.id === currentUserProfile?.id ? 'Você não pode remover seus próprios privilégios' : ''}
+                                                title={
+                                                    user.id === currentUserProfile?.id
+                                                        ? 'Você não pode remover seus próprios privilégios'
+                                                        : user.role === 'master_admin'
+                                                            ? 'Não é possível remover privilégios de um Master Admin'
+                                                            : ''
+                                                }
                                             >
                                                 <span className="material-symbols-outlined text-sm">
                                                     {actionLoading === user.id ? 'sync' : 'person_remove'}

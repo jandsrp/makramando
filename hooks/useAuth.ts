@@ -7,6 +7,7 @@ export interface AuthState {
     session: Session | null;
     profile: Profile | null;
     isAdmin: boolean;
+    isMasterAdmin: boolean;
     isLoading: boolean;
 }
 
@@ -56,12 +57,14 @@ export const useAuth = () => {
         fetchProfile();
     }, [session]);
 
-    const isAdmin = profile?.role === 'admin';
+    const isAdmin = profile?.role === 'admin' || profile?.role === 'master_admin';
+    const isMasterAdmin = profile?.role === 'master_admin';
 
     return {
         session,
         profile,
         isAdmin,
+        isMasterAdmin,
         isLoading,
     };
 };

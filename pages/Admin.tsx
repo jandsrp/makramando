@@ -13,7 +13,7 @@ interface AdminProps {
 }
 
 const Admin: React.FC<AdminProps> = ({ products: initialProducts, setProducts: setGlobalProducts }) => {
-  const { isAdmin, isLoading: adminLoading } = useAdmin();
+  const { isAdmin, isMasterAdmin, isLoading: adminLoading } = useAdmin();
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'users'>('products');
@@ -137,12 +137,14 @@ const Admin: React.FC<AdminProps> = ({ products: initialProducts, setProducts: s
             >
               Pedidos
             </button>
-            <button
-              onClick={() => setActiveTab('users')}
-              className={`px-6 py-2 rounded-lg font-bold transition-all ${activeTab === 'users' ? 'bg-white dark:bg-gray-700 text-primary shadow-sm' : 'text-gray-500'}`}
-            >
-              Usuários
-            </button>
+            {isMasterAdmin && (
+              <button
+                onClick={() => setActiveTab('users')}
+                className={`px-6 py-2 rounded-lg font-bold transition-all ${activeTab === 'users' ? 'bg-white dark:bg-gray-700 text-primary shadow-sm' : 'text-gray-500'}`}
+              >
+                Usuários
+              </button>
+            )}
           </div>
           {activeTab === 'products' && (
             <button
@@ -241,7 +243,7 @@ const Admin: React.FC<AdminProps> = ({ products: initialProducts, setProducts: s
               </tbody>
             </table>
           </div>
-        ) : activeTab === 'users' ? (
+        ) : activeTab === 'users' && isMasterAdmin ? (
           <UserManagement currentUserProfile={profile} />
         ) : null}
       </div>

@@ -18,7 +18,7 @@ const SLIDES = [
         id: 3,
         image: '/hero-table-set.png',
         title: 'Mesa Posta com Charme',
-        subtitle: 'Sousplat e porta-copos em macramê para momentos inesquecíveis em família.'
+        subtitle: 'Sousplat, porta-talher e porta-copos em macramê para momentos inesquecíveis em família.'
     }
 ];
 
@@ -57,7 +57,7 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ onCtaClick }) => {
 
                             <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 z-10">
                                 <div className={`transition-all duration-1000 delay-300 transform ${index === current ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-                                    <span className="text-primary font-bold tracking-[0.2em] uppercase text-sm md:text-base mb-4 block">Handcrafted with Soul</span>
+                                    {index === 0 && <span className="text-primary font-bold tracking-[0.2em] uppercase text-sm md:text-base mb-4 block">Feito à Mão com Alma</span>}
                                     <h1 className="text-white text-4xl md:text-6xl lg:text-7xl font-black mb-6 leading-tight max-w-4xl mx-auto">
                                         {slide.title}
                                     </h1>
