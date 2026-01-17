@@ -90,6 +90,7 @@ const Admin: React.FC<AdminProps> = ({ products: initialProducts, setProducts: s
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
     setIsAdding(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Show loading while checking admin status
@@ -166,6 +167,7 @@ const Admin: React.FC<AdminProps> = ({ products: initialProducts, setProducts: s
 
       {isAdding && activeTab === 'products' && (
         <ProductForm
+          key={editingProduct?.id || 'new'}
           product={editingProduct}
           onSuccess={() => { setIsAdding(false); setEditingProduct(null); fetchProducts(); }}
           onCancel={() => { setIsAdding(false); setEditingProduct(null); }}

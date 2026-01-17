@@ -20,7 +20,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel, p
     const [formData, setFormData] = useState({
         name: product?.name || '',
         description: product?.description || '',
-        price: product?.price.toString() || '',
+        price: product?.price?.toString() || '',
         category_id: product?.category_id || '',
         selectedColors: product?.product_colors || [],
         selectedSizes: product?.product_sizes || [],
