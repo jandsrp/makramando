@@ -20,6 +20,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserProfi
         password: '',
         role: 'admin' as 'admin' | 'master_admin' | 'customer'
     });
+    const [showPassword, setShowPassword] = useState(false);
 
     const fetchUsers = async () => {
         setLoading(true);
@@ -238,15 +239,26 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserProfi
                                     <span className="text-xs font-bold uppercase tracking-wider dark:text-white">
                                         {editingUser ? 'Senha (deixe em branco para não alterar)' : 'Senha Temporária'}
                                     </span>
-                                    <input
-                                        required={!editingUser}
-                                        type="password"
-                                        minLength={6}
-                                        className="form-input rounded-xl border-gray-100 dark:border-gray-800 dark:bg-gray-800 dark:text-white p-3 border focus:border-primary outline-none"
-                                        placeholder={editingUser ? '••••••' : 'Mínimo 6 caracteres'}
-                                        value={registrationData.password}
-                                        onChange={e => setRegistrationData({ ...registrationData, password: e.target.value })}
-                                    />
+                                    <div className="relative">
+                                        <input
+                                            required={!editingUser}
+                                            type={showPassword ? "text" : "password"}
+                                            minLength={6}
+                                            className="form-input rounded-xl border-gray-100 dark:border-gray-800 dark:bg-gray-800 dark:text-white p-3 border focus:border-primary outline-none w-full pr-12"
+                                            placeholder={editingUser ? '••••••' : 'Mínimo 6 caracteres'}
+                                            value={registrationData.password}
+                                            onChange={e => setRegistrationData({ ...registrationData, password: e.target.value })}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors flex items-center justify-center p-1"
+                                        >
+                                            <span className="material-symbols-outlined text-xl">
+                                                {showPassword ? 'visibility_off' : 'visibility'}
+                                            </span>
+                                        </button>
+                                    </div>
                                 </label>
 
                                 <label className="flex flex-col gap-1">
