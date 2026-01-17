@@ -143,16 +143,16 @@ export const useCart = (session: Session | null) => {
 
 
     const addToCart = async (product: Product, quantity: number) => {
-        if (session?.user) {
-            // Optimistic update
-            setCart(prev => {
-                const existing = prev.find(item => item.id === product.id);
-                if (existing) {
-                    return prev.map(item => item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item);
-                }
-                return [...prev, { ...product, quantity }];
-            });
+        // Use functional state updates for reliability
+        setCart(prev => {
+            const existing = prev.find(item => item.id === product.id);
+            if (existing) {
+                return prev.map(item => item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item);
+            }
+            return [...prev, { ...product, quantity }];
+        });
 
+        if (session?.user) {
             // DB Update
             const { data: existing } = await supabase
                 .from('carts')
@@ -170,14 +170,6 @@ export const useCart = (session: Session | null) => {
                     quantity: quantity
                 });
             }
-        } else {
-            setCart(prev => {
-                const existing = prev.find(item => item.id === product.id);
-                if (existing) {
-                    return prev.map(item => item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item);
-                }
-                return [...prev, { ...product, quantity }];
-            });
         }
     };
 
@@ -191,33 +183,26 @@ export const useCart = (session: Session | null) => {
     };
 
     const updateQuantity = async (id: string, delta: number) => {
-        if (session?.user) {
-            // We'll calculate new quantity first to avoid invalid state
-            let newQuantity = 0;
-            setCart(prev => prev.map(item => {
-                if (item.id === id) {
-                    newQuantity = Math.max(1, item.quantity + delta);
-                    return { ...item, quantity: newQuantity };
-                }
-                return item;
-            }));
+        let calculatedNewQuantity = 0;
 
-            // Wait for the state update (not guaranteed instantly accessible but for the logic flow)
-            // Better: use the calculated newQuantity
-            if (newQuantity > 0) {
-                await supabase
-                    .from('carts')
-                    .update({ quantity: newQuantity })
-                    .eq('user_id', session.user.id)
-                    .eq('product_id', id);
-            }
-        } else {
-            setCart(prev => prev.map(item => {
+        // Use functional update to ensure we have the most recent state
+        setCart(prev => {
+            return prev.map(item => {
                 if (item.id === id) {
-                    return { ...item, quantity: Math.max(1, item.quantity + delta) };
+                    calculatedNewQuantity = Math.max(1, item.quantity + delta);
+                    return { ...item, quantity: calculatedNewQuantity };
                 }
                 return item;
-            }));
+            });
+        });
+
+        // Sync with Supabase if logged in
+        if (session?.user && calculatedNewQuantity > 0) {
+            await supabase
+                .from('carts')
+                .update({ quantity: calculatedNewQuantity })
+                .eq('user_id', session.user.id)
+                .eq('product_id', id);
         }
     };
 

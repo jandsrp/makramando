@@ -109,8 +109,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, addToCart, navig
               <div className="flex flex-col sm:flex-row gap-4 mt-4">
                 <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-xl h-14 w-full sm:w-40 border border-transparent focus-within:border-primary">
                   <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="px-4 text-gray-500 hover:text-black dark:hover:text-white"
+                    onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
+                    className="px-4 h-full text-gray-500 hover:text-black dark:hover:text-white transition-all active:scale-95 cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-lg">remove</span>
                   </button>
@@ -118,11 +118,11 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, addToCart, navig
                     type="text"
                     value={quantity}
                     readOnly
-                    className="flex-1 bg-transparent border-none text-center font-bold dark:text-white focus:ring-0"
+                    className="flex-1 min-w-0 bg-transparent border-none text-center font-bold dark:text-white focus:ring-0"
                   />
                   <button
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="px-4 text-gray-500 hover:text-black dark:hover:text-white"
+                    onClick={() => setQuantity(prev => prev + 1)}
+                    className="px-4 h-full text-gray-500 hover:text-black dark:hover:text-white transition-all active:scale-95 cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-lg">add</span>
                   </button>
