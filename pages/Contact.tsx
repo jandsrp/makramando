@@ -49,35 +49,25 @@ const Contact: React.FC<ContactProps> = ({ showToast }) => {
 
     setLoading(true);
     try {
-      // 3. Web3Forms Submission
-      const web3Key = import.meta.env.VITE_WEB3FORMS_KEY;
-      if (web3Key && web3Key !== 'YOUR_KEY_HERE') {
-        const web3Response = await fetch('https://api.web3forms.com/submit', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify({
-            access_key: web3Key,
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            subject: `Novo Contato: ${formData.subject}`,
-            message: formData.message,
-            from_name: 'Makramando Site',
-            replyto: formData.email
-          })
-        });
-
-        const web3Result = await web3Response.json();
-        if (!web3Result.success) {
-          console.warn('Web3Forms failed:', web3Result.message);
-        }
-      }
-
-      // 4. Define Recipients (for database logging)
+      // 3. Define Recipients (will be handled by Edge Function + Resend)
       const notificationRecipients = ['sandrareginarr@gmail.com', 'jandsrp@gmail.com'];
+
+      // 4. Send Email via Supabase Edge Function (Internal Resend)
+      const { error: emailError } = await supabase.functions.invoke('send-contact-email', {
+        body: {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          subject: formData.subject,
+          message: formData.message,
+          recipients: notificationRecipients
+        }
+      });
+
+      if (emailError) {
+        console.warn('Edge Function email failed:', emailError);
+        // We continue because we still want to save to DB and manage leads
+      }
 
       // 5. Save Message to Supabase (Backup & Log)
       const { error: msgError } = await supabase
