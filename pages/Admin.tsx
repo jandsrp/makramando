@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
-import { Product, Profile } from '../types';
+import { Product, Profile, Category, Color, Size } from '../types';
 import { supabase } from '../services/supabase';
 import { ProductForm } from '../components/Admin/ProductForm';
 import { UserManagement } from '../components/Admin/UserManagement';
+import { AttributeManagement } from '../components/Admin/AttributeManagement';
 import { useAdmin } from '../hooks/useAdmin';
 
 interface AdminProps {
@@ -16,7 +16,7 @@ const Admin: React.FC<AdminProps> = ({ products: initialProducts, setProducts: s
   const { isAdmin, isMasterAdmin, isLoading: adminLoading } = useAdmin();
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'users'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'users' | 'attributes'>('products');
   const [isAdding, setIsAdding] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -137,6 +137,12 @@ const Admin: React.FC<AdminProps> = ({ products: initialProducts, setProducts: s
             >
               Pedidos
             </button>
+            <button
+              onClick={() => setActiveTab('attributes')}
+              className={`px-6 py-2 rounded-lg font-bold transition-all ${activeTab === 'attributes' ? 'bg-white dark:bg-gray-700 text-primary shadow-sm' : 'text-gray-500'}`}
+            >
+              Atributos
+            </button>
             {isMasterAdmin && (
               <button
                 onClick={() => setActiveTab('users')}
@@ -243,6 +249,8 @@ const Admin: React.FC<AdminProps> = ({ products: initialProducts, setProducts: s
               </tbody>
             </table>
           </div>
+        ) : activeTab === 'attributes' ? (
+          <AttributeManagement />
         ) : activeTab === 'users' && isMasterAdmin ? (
           <UserManagement currentUserProfile={profile} />
         ) : null}

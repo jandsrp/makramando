@@ -28,7 +28,9 @@ try {
 }
 
 if (!apiKey) {
-    console.error("❌ Error: VITE_GEMINI_API_KEY not found in .env.local");
+    console.error("\\n❌ Error: VITE_GEMINI_API_KEY not found in .env.local");
+    console.error("👉 Please add your Gemini API key to .env.local like this:");
+    console.error('   VITE_GEMINI_API_KEY="your-api-key-here"\\n');
     process.exit(1);
 }
 

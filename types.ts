@@ -1,3 +1,21 @@
+export interface Category {
+  id: string;
+  name: string;
+  created_at?: string;
+}
+
+export interface Color {
+  id: string;
+  name: string;
+  hex_code: string | null;
+  created_at?: string;
+}
+
+export interface Size {
+  id: string;
+  name: string;
+  created_at?: string;
+}
 
 export interface Product {
   id: string;
@@ -5,11 +23,15 @@ export interface Product {
   description: string | null;
   price: number;
   stock: number;
-  size: string | null;
-  color: string | null;
+  size: string | null; // Keep for compatibility
+  color: string | null; // Keep for compatibility
   image_url: string | null;
   images?: string[] | null;
   created_at?: string;
+  // New Attributes
+  category_id?: string | null;
+  product_colors?: string[] | null;
+  product_sizes?: string[] | null;
   // UI Fields
   category?: string;
   is_bestseller?: boolean;

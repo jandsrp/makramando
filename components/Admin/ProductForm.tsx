@@ -1,7 +1,6 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
-import { Product } from '../../types';
+import { Product, Category, Color, Size } from '../../types';
 import { generateProductDescription } from '../../services/geminiService';
 
 interface ProductFormProps {
@@ -14,15 +13,56 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel, p
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [generatingDescription, setGeneratingDescription] = useState(false);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [allColors, setAllColors] = useState<Color[]>([]);
+    const [allSizes, setAllSizes] = useState<Size[]>([]);
+
     const [formData, setFormData] = useState({
         name: product?.name || '',
         description: product?.description || '',
         price: product?.price.toString() || '',
-        category: product?.category || 'Painéis de Parede',
-        size: product?.size || 'Padrão',
-        color: product?.color || '#fdfbf7',
+        category_id: product?.category_id || '',
+        selectedColors: product?.product_colors || [],
+        selectedSizes: product?.product_sizes || [],
         images: product?.images || (product?.image_url ? [product.image_url] : [])
     });
+
+    useEffect(() => {
+        const fetchAttributes = async () => {
+            const [cats, cols, szs] = await Promise.all([
+                supabase.from('categories').select('*').order('name'),
+                supabase.from('colors').select('*').order('name'),
+                supabase.from('sizes').select('*').order('name')
+            ]);
+            if (cats.data) {
+                setCategories(cats.data);
+                if (!product && cats.data.length > 0) {
+                    setFormData(prev => ({ ...prev, category_id: cats.data[0].id }));
+                }
+            }
+            if (cols.data) setAllColors(cols.data);
+            if (szs.data) setAllSizes(szs.data);
+        };
+        fetchAttributes();
+    }, [product]);
+
+    const toggleColor = (colorName: string) => {
+        setFormData(prev => ({
+            ...prev,
+            selectedColors: prev.selectedColors.includes(colorName)
+                ? prev.selectedColors.filter(c => c !== colorName)
+                : [...prev.selectedColors, colorName]
+        }));
+    };
+
+    const toggleSize = (sizeName: string) => {
+        setFormData(prev => ({
+            ...prev,
+            selectedSizes: prev.selectedSizes.includes(sizeName)
+                ? prev.selectedSizes.filter(s => s !== sizeName)
+                : [...prev.selectedSizes, sizeName]
+        }));
+    };
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
@@ -69,9 +109,12 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel, p
                 name: formData.name,
                 description: formData.description,
                 price: parseFloat(formData.price),
-                category: formData.category,
-                size: formData.size,
-                color: formData.color,
+                category_id: formData.category_id,
+                product_colors: formData.selectedColors,
+                product_sizes: formData.selectedSizes,
+                category: categories.find(c => c.id === formData.category_id)?.name || '', // Backward compatibility
+                color: formData.selectedColors[0] || '', // Backward compatibility
+                size: formData.selectedSizes[0] || '', // Backward compatibility
                 images: formData.images,
                 image_url: image_url, // Keep backward compatibility
                 is_new: product ? product.is_new : true, // Keep existing status if editing
@@ -173,13 +216,12 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel, p
                             <span className="text-sm font-bold dark:text-white">Categoria</span>
                             <select
                                 className="form-select rounded-xl border-gray-100 dark:border-gray-800 dark:bg-gray-800 dark:text-white p-3 border"
-                                value={formData.category}
-                                onChange={e => setFormData({ ...formData, category: e.target.value })}
+                                value={formData.category_id}
+                                onChange={e => setFormData({ ...formData, category_id: e.target.value })}
                             >
-                                <option>Painéis de Parede</option>
-                                <option>Suportes para Plantas</option>
-                                <option>Acessórios</option>
-                                <option>Decoração Infantil</option>
+                                {categories.map(cat => (
+                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                ))}
                             </select>
                         </label>
                     </div>
@@ -226,25 +268,44 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel, p
                         <p className="text-xs text-gray-400">A primeira imagem será usada como destaque/capa.</p>
                     </label>
 
-                    <label className="flex flex-col gap-2">
-                        <span className="text-sm font-bold dark:text-white">Cor (Hex ou Nome)</span>
-                        <input
-                            className="form-input rounded-xl border-gray-100 dark:border-gray-800 dark:bg-gray-800 dark:text-white p-3 border"
-                            value={formData.color}
-                            onChange={e => setFormData({ ...formData, color: e.target.value })}
-                            placeholder="#fdfbf7"
-                        />
-                    </label>
+                    <div className="flex flex-col gap-2">
+                        <span className="text-sm font-bold dark:text-white">Cores Disponíveis</span>
+                        <div className="flex flex-wrap gap-2">
+                            {allColors.map(color => (
+                                <button
+                                    key={color.id}
+                                    type="button"
+                                    onClick={() => toggleColor(color.name)}
+                                    className={`px-3 py-2 rounded-xl border text-xs font-bold transition-all flex items-center gap-2 ${formData.selectedColors.includes(color.name)
+                                        ? 'bg-primary border-primary text-black'
+                                        : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-800 dark:text-white'
+                                        }`}
+                                >
+                                    <div className="size-3 rounded-full border border-gray-200" style={{ backgroundColor: color.hex_code || '#fff' }}></div>
+                                    {color.name}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
 
-                    <label className="flex flex-col gap-2">
-                        <span className="text-sm font-bold dark:text-white">Tamanho</span>
-                        <input
-                            className="form-input rounded-xl border-gray-100 dark:border-gray-800 dark:bg-gray-800 dark:text-white p-3 border"
-                            value={formData.size}
-                            onChange={e => setFormData({ ...formData, size: e.target.value })}
-                            placeholder="Padrão, 30x50cm..."
-                        />
-                    </label>
+                    <div className="flex flex-col gap-2">
+                        <span className="text-sm font-bold dark:text-white">Tamanhos Disponíveis</span>
+                        <div className="flex flex-wrap gap-2">
+                            {allSizes.map(size => (
+                                <button
+                                    key={size.id}
+                                    type="button"
+                                    onClick={() => toggleSize(size.name)}
+                                    className={`px-4 py-2 rounded-xl border text-xs font-bold transition-all ${formData.selectedSizes.includes(size.name)
+                                        ? 'bg-primary border-primary text-black'
+                                        : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-800 dark:text-white'
+                                        }`}
+                                >
+                                    {size.name}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
 
                     <div className="pt-4 flex gap-4">
                         <button

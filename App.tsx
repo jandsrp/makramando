@@ -81,6 +81,16 @@ const App: React.FC = () => {
   const { session, profile } = useAuth();
   const { cart, addToCart, removeFromCart, updateQuantity, clearCart } = useCart(session);
 
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setCurrentView('auth');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   const navigateTo = (view: View, productId?: string) => {
     setCurrentView(view);
     if (productId) {
