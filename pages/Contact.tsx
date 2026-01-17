@@ -9,9 +9,26 @@ const Contact: React.FC<ContactProps> = ({ showToast }) => {
   const [formData, setFormData] = React.useState({
     name: '',
     email: '',
+    phone: '',
     subject: 'Selecione um assunto',
     message: ''
   });
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value.replace(/\D/g, '');
+    if (val.length > 11) val = val.slice(0, 11);
+
+    // Mask: (99) 99999-9999
+    let masked = val;
+    if (val.length > 2) {
+      masked = `(${val.slice(0, 2)}) ${val.slice(2)}`;
+    }
+    if (val.length > 7) {
+      masked = `(${val.slice(0, 2)}) ${val.slice(2, 7)}-${val.slice(7)}`;
+    }
+
+    setFormData({ ...formData, phone: masked });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,16 +39,41 @@ const Contact: React.FC<ContactProps> = ({ showToast }) => {
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      // 1. Save Message
+      const { error: msgError } = await supabase
         .from('contact_messages')
-        .insert([formData]);
+        .insert([{
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          subject: formData.subject,
+          message: formData.message
+        }]);
 
-      if (error) throw error;
+      if (msgError) throw msgError;
+
+      // 2. Manage Lead
+      const { data: existingLead } = await supabase
+        .from('leads')
+        .select('id')
+        .eq('email', formData.email.toLowerCase())
+        .maybeSingle();
+
+      if (!existingLead) {
+        await supabase
+          .from('leads')
+          .insert([{
+            name: formData.name,
+            email: formData.email.toLowerCase(),
+            phone: formData.phone
+          }]);
+      }
 
       showToast('Mensagem enviada com sucesso! Entraremos em contato em breve.', 'success');
       setFormData({
         name: '',
         email: '',
+        phone: '',
         subject: 'Selecione um assunto',
         message: ''
       });
@@ -144,20 +186,33 @@ const Contact: React.FC<ContactProps> = ({ showToast }) => {
                     />
                   </label>
                 </div>
-                <label className="flex flex-col gap-2">
-                  <span className="text-sm font-bold dark:text-white">Sobre o que vamos falar?</span>
-                  <select
-                    className="form-select rounded-xl border-gray-100 dark:border-gray-800 dark:bg-gray-800 dark:text-white h-14"
-                    value={formData.subject}
-                    onChange={e => setFormData({ ...formData, subject: e.target.value })}
-                  >
-                    <option disabled>Selecione um assunto</option>
-                    <option>Encomenda Personalizada</option>
-                    <option>Dúvida sobre Produto</option>
-                    <option>Minha Compra</option>
-                    <option>Parceria</option>
-                  </select>
-                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <label className="flex flex-col gap-2">
+                    <span className="text-sm font-bold dark:text-white">WhatsApp / Telefone</span>
+                    <input
+                      required
+                      className="form-input rounded-xl border-gray-100 dark:border-gray-800 dark:bg-gray-800 dark:text-white h-14"
+                      placeholder="(21) 99999-9999"
+                      value={formData.phone}
+                      onChange={handlePhoneChange}
+                    />
+                  </label>
+                  <label className="flex flex-col gap-2">
+                    <span className="text-sm font-bold dark:text-white">Sobre o que vamos falar?</span>
+                    <select
+                      required
+                      className="form-select rounded-xl border-gray-100 dark:border-gray-800 dark:bg-gray-800 dark:text-white h-14"
+                      value={formData.subject}
+                      onChange={e => setFormData({ ...formData, subject: e.target.value })}
+                    >
+                      <option disabled value="Selecione um assunto">Selecione um assunto</option>
+                      <option>Encomenda Personalizada</option>
+                      <option>Dúvida sobre Produto</option>
+                      <option>Minha Compra</option>
+                      <option>Parceria</option>
+                    </select>
+                  </label>
+                </div>
                 <label className="flex flex-col gap-2">
                   <span className="text-sm font-bold dark:text-white">Sua Mensagem</span>
                   <textarea
