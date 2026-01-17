@@ -4,9 +4,10 @@ import { Profile } from '../../types';
 
 interface UserManagementProps {
     currentUserProfile: Profile | null;
+    showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
 }
 
-export const UserManagement: React.FC<UserManagementProps> = ({ currentUserProfile }) => {
+export const UserManagement: React.FC<UserManagementProps> = ({ currentUserProfile, showToast }) => {
     const [users, setUsers] = useState<Profile[]>([]);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -53,11 +54,11 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserProfi
 
             if (error) throw error;
 
-            alert('Usuário promovido a administrador com sucesso!');
+            showToast('Usuário promovido a administrador!', 'success');
             fetchUsers();
         } catch (error) {
             console.error('Error promoting user:', error);
-            alert('Erro ao promover usuário. Verifique as permissões.');
+            showToast('Erro ao promover usuário.', 'error');
         } finally {
             setActionLoading(null);
         }
@@ -70,7 +71,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserProfi
 
         // Prevent demoting yourself
         if (userId === currentUserProfile?.id) {
-            alert('Você não pode remover seus próprios privilégios de administrador.');
+            showToast('Você não pode remover seus próprios privilégios.', 'error');
             return;
         }
 
@@ -83,11 +84,11 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserProfi
 
             if (error) throw error;
 
-            alert('Privilégios de administrador removidos com sucesso!');
+            showToast('Privilégios removidos com sucesso!', 'success');
             fetchUsers();
         } catch (error) {
             console.error('Error demoting user:', error);
-            alert('Erro ao remover privilégios. Verifique as permissões.');
+            showToast('Erro ao remover privilégios.', 'error');
         } finally {
             setActionLoading(null);
         }
@@ -110,7 +111,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserProfi
 
             if (error) throw error;
 
-            alert(editingUser ? 'Usuário atualizado com sucesso!' : 'Usuário criado com sucesso!');
+            showToast(editingUser ? 'Usuário atualizado com sucesso!' : 'Usuário criado com sucesso!', 'success');
             setIsRegistering(false);
             setEditingUser(null);
             setRegistrationData({
@@ -123,7 +124,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserProfi
             fetchUsers();
         } catch (error: any) {
             console.error('Error managing user:', error);
-            alert(`Erro: ${error.message || 'Erro desconhecido'}`);
+            showToast(error.message || 'Erro desconhecido', 'error');
         } finally {
             setRegistrationLoading(false);
         }
@@ -142,11 +143,11 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserProfi
 
             if (error) throw error;
 
-            alert('Usuário excluído com sucesso!');
+            showToast('Usuário excluído com sucesso!', 'success');
             fetchUsers();
         } catch (error: any) {
             console.error('Error deleting user:', error);
-            alert(`Erro ao excluir usuário: ${error.message}`);
+            showToast(`Erro ao excluir usuário: ${error.message}`, 'error');
         } finally {
             setActionLoading(null);
         }

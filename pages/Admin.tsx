@@ -10,9 +10,10 @@ interface AdminProps {
   products: Product[]; // Currently passing prop but we might want to refetch for admin specifics
   setProducts: (p: Product[]) => void; // To update global state if needed
   addProduct: (p: Product) => void;
+  showToast: (message: string, type?: any) => void;
 }
 
-const Admin: React.FC<AdminProps> = ({ products: initialProducts, setProducts: setGlobalProducts }) => {
+const Admin: React.FC<AdminProps> = ({ products: initialProducts, setProducts: setGlobalProducts, showToast }) => {
   const { isAdmin, isMasterAdmin, isLoading: adminLoading } = useAdmin();
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
@@ -169,8 +170,9 @@ const Admin: React.FC<AdminProps> = ({ products: initialProducts, setProducts: s
         <ProductForm
           key={editingProduct?.id || 'new'}
           product={editingProduct}
-          onSuccess={() => { setIsAdding(false); setEditingProduct(null); fetchProducts(); }}
+          onSuccess={() => { setIsAdding(false); setEditingProduct(null); fetchProducts(); showToast('Produto salvo com sucesso!', 'success'); }}
           onCancel={() => { setIsAdding(false); setEditingProduct(null); }}
+          showToast={showToast}
         />
       )}
 
@@ -254,7 +256,7 @@ const Admin: React.FC<AdminProps> = ({ products: initialProducts, setProducts: s
         ) : activeTab === 'attributes' ? (
           <AttributeManagement />
         ) : activeTab === 'users' && isMasterAdmin ? (
-          <UserManagement currentUserProfile={profile} />
+          <UserManagement currentUserProfile={profile} showToast={showToast} />
         ) : null}
       </div>
     </div>

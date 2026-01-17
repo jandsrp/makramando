@@ -5,11 +5,12 @@ import { Reveal } from '../components/UI/Reveal';
 
 interface AuthProps {
     navigateTo: (view: View) => void;
+    showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
 }
 
 type AuthMode = 'login' | 'signup' | 'forgot' | 'reset';
 
-const Auth: React.FC<AuthProps> = ({ navigateTo }) => {
+const Auth: React.FC<AuthProps> = ({ navigateTo, showToast }) => {
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -19,7 +20,6 @@ const Auth: React.FC<AuthProps> = ({ navigateTo }) => {
     const [authMode, setAuthMode] = useState<AuthMode>('login');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     React.useEffect(() => {
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -34,7 +34,6 @@ const Auth: React.FC<AuthProps> = ({ navigateTo }) => {
     const handleAuth = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        setMessage(null);
 
         try {
             if (authMode === 'signup') {
@@ -57,7 +56,7 @@ const Auth: React.FC<AuthProps> = ({ navigateTo }) => {
                     }
                 });
                 if (error) throw error;
-                setMessage({ type: 'success', text: 'Verifique seu email para confirmar o cadastro!' });
+                showToast('Verifique seu email para confirmar o cadastro!', 'success');
                 setAuthMode('login');
             } else if (authMode === 'login') {
                 const { error } = await supabase.auth.signInWithPassword({
@@ -71,21 +70,20 @@ const Auth: React.FC<AuthProps> = ({ navigateTo }) => {
                     redirectTo: `${window.location.origin}`,
                 });
                 if (error) throw error;
-                setMessage({ type: 'success', text: 'Link de recuperação enviado para seu email!' });
+                showToast('Link de recuperação enviado para seu email!', 'success');
             } else if (authMode === 'reset') {
                 if (password !== confirmPassword) {
                     throw new Error('As senhas não coincidem.');
                 }
                 const { error } = await supabase.auth.updateUser({ password });
                 if (error) throw error;
-                setMessage({ type: 'success', text: 'Senha atualizada com sucesso! Você já pode entrar.' });
+                showToast('Senha atualizada com sucesso! Você já pode entrar.', 'success');
                 setTimeout(() => {
                     setAuthMode('login');
-                    setMessage(null);
                 }, 2000);
             }
         } catch (error: any) {
-            setMessage({ type: 'error', text: error.message || 'Ocorreu um erro.' });
+            showToast(error.message || 'Ocorreu um erro.', 'error');
         } finally {
             setLoading(false);
         }
@@ -110,15 +108,6 @@ const Auth: React.FC<AuthProps> = ({ navigateTo }) => {
                         <h2 className="text-3xl font-black text-primary mb-2">{title}</h2>
                         <p className="text-gray-500">{sub}</p>
                     </div>
-
-                    {message && (
-                        <div className={`p-4 rounded-xl mb-6 text-sm font-medium ${message.type === 'success'
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                            : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                            }`}>
-                            {message.text}
-                        </div>
-                    )}
 
                     <form onSubmit={handleAuth} className="flex flex-col gap-4">
                         {authMode === 'signup' && (
@@ -244,7 +233,6 @@ const Auth: React.FC<AuthProps> = ({ navigateTo }) => {
                             <button
                                 onClick={() => {
                                     setAuthMode(authMode === 'login' ? 'signup' : 'login');
-                                    setMessage(null);
                                 }}
                                 className="text-gray-500 hover:text-primary transition-colors text-sm font-medium w-full"
                             >

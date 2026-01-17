@@ -7,9 +7,10 @@ interface ProductFormProps {
     onSuccess: () => void;
     onCancel: () => void;
     product?: Product | null;
+    showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
 }
 
-export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel, product }) => {
+export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel, product, showToast }) => {
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [generatingDescription, setGeneratingDescription] = useState(false);
@@ -67,7 +68,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel, p
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
         if (formData.images.length >= 4) {
-            alert('Máximo de 4 imagens permitido.');
+            showToast('Máximo de 4 imagens permitido.', 'error');
             return;
         }
 
@@ -91,7 +92,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel, p
                 images: [...prev.images, data.publicUrl]
             }));
         } catch (error) {
-            alert('Erro ao fazer upload da imagem!');
+            showToast('Erro ao fazer upload da imagem!', 'error');
             console.error(error);
         } finally {
             setUploading(false);
@@ -141,7 +142,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel, p
 
             onSuccess();
         } catch (error) {
-            alert('Erro ao salvar produto!');
+            showToast('Erro ao salvar produto!', 'error');
             console.error(error);
         } finally {
             setLoading(false);
@@ -172,7 +173,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel, p
                                 type="button"
                                 disabled={generatingDescription}
                                 onClick={async () => {
-                                    if (!formData.name) return alert('Digite o nome do produto primeiro.');
+                                    if (!formData.name) return showToast('Digite o nome do produto primeiro.', 'info');
                                     setGeneratingDescription(true);
                                     try {
                                         const desc = await generateProductDescription(formData.name, [formData.category, formData.color]);

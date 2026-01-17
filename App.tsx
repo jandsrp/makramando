@@ -17,6 +17,7 @@ import { supabase } from './services/supabase';
 import { Session } from '@supabase/supabase-js';
 import { useAuth } from './hooks/useAuth';
 import { useCart } from './hooks/useCart';
+import { Toast, ToastType } from './components/UI/Toast';
 
 // Initial Mock Data
 // Initial Mock Data
@@ -62,6 +63,11 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>('home');
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
+
+  const showToast = (message: string, type: ToastType = 'info') => {
+    setToast({ message, type });
+  };
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -113,11 +119,11 @@ const App: React.FC = () => {
       case 'shop': return <Shop products={products} navigateTo={navigateTo} />;
       case 'product': return selectedProduct ? <ProductDetail product={selectedProduct} addToCart={addToCart} navigateTo={navigateTo} /> : <Home products={products} navigateTo={navigateTo} />;
       case 'cart': return <Cart cart={cart} removeFromCart={removeFromCart} updateQuantity={updateQuantity} navigateTo={navigateTo} />;
-      case 'checkout': return <Checkout cart={cart} navigateTo={navigateTo} clearCart={clearCart} />;
-      case 'admin': return <Admin products={products} addProduct={addProduct} setProducts={setProducts} />;
+      case 'checkout': return <Checkout cart={cart} navigateTo={navigateTo} clearCart={clearCart} showToast={showToast} />;
+      case 'admin': return <Admin products={products} addProduct={addProduct} setProducts={setProducts} showToast={showToast} />;
       case 'contact': return <Contact />;
       case 'about': return <About navigateTo={navigateTo} />;
-      case 'auth': return <Auth navigateTo={navigateTo} />;
+      case 'auth': return <Auth navigateTo={navigateTo} showToast={showToast} />;
       case 'account': return <Account session={session} navigateTo={navigateTo} />;
       default: return <Home products={products} navigateTo={navigateTo} />;
     }
@@ -130,6 +136,13 @@ const App: React.FC = () => {
         {renderContent()}
       </main>
       <Footer navigateTo={navigateTo} />
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 };

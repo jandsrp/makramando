@@ -7,9 +7,10 @@ interface CheckoutProps {
   cart: CartItem[];
   navigateTo: (view: View) => void;
   clearCart: () => void | Promise<void>;
+  showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
 }
 
-const Checkout: React.FC<CheckoutProps> = ({ cart, navigateTo, clearCart }) => {
+const Checkout: React.FC<CheckoutProps> = ({ cart, navigateTo, clearCart, showToast }) => {
   const [loading, setLoading] = React.useState(false);
   const [session, setSession] = React.useState<any>(null);
   const [checkingAuth, setCheckingAuth] = React.useState(true);
@@ -23,7 +24,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, navigateTo, clearCart }) => {
       setCheckingAuth(false);
 
       if (!session) {
-        alert('Você precisa estar logado para finalizar a compra.');
+        showToast('Você precisa estar logado para finalizar a compra.', 'info');
         navigateTo('auth');
       }
     };
@@ -38,7 +39,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, navigateTo, clearCart }) => {
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
-        alert('Por favor, faça login para finalizar a compra.');
+        showToast('Por favor, faça login para finalizar a compra.', 'info');
         navigateTo('auth');
         return;
       }
@@ -68,12 +69,12 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, navigateTo, clearCart }) => {
 
       if (itemsError) throw itemsError;
 
-      alert('Pedido realizado com sucesso!');
+      showToast('Pedido realizado com sucesso!', 'success');
       await clearCart();
       navigateTo('home');
     } catch (error) {
       console.error('Error creating order:', error);
-      alert('Erro ao processar o seu pedido. Tente novamente.');
+      showToast('Erro ao processar o seu pedido.', 'error');
     } finally {
       setLoading(false);
     }
