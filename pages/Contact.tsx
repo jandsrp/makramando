@@ -49,10 +49,37 @@ const Contact: React.FC<ContactProps> = ({ showToast }) => {
 
     setLoading(true);
     try {
-      // 3. Define Recipients
+      // 3. Web3Forms Submission
+      const web3Key = import.meta.env.VITE_WEB3FORMS_KEY;
+      if (web3Key && web3Key !== 'YOUR_KEY_HERE') {
+        const web3Response = await fetch('https://api.web3forms.com/submit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            access_key: web3Key,
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            subject: `Novo Contato: ${formData.subject}`,
+            message: formData.message,
+            from_name: 'Makramando Site',
+            replyto: formData.email
+          })
+        });
+
+        const web3Result = await web3Response.json();
+        if (!web3Result.success) {
+          console.warn('Web3Forms failed:', web3Result.message);
+        }
+      }
+
+      // 4. Define Recipients (for database logging)
       const notificationRecipients = ['sandrareginarr@gmail.com', 'jandsrp@gmail.com'];
 
-      // 4. Save Message
+      // 5. Save Message to Supabase (Backup & Log)
       const { error: msgError } = await supabase
         .from('contact_messages')
         .insert([{
@@ -66,7 +93,7 @@ const Contact: React.FC<ContactProps> = ({ showToast }) => {
 
       if (msgError) throw msgError;
 
-      // 5. Manage Lead
+      // 6. Manage Lead
       const { data: existingLead } = await supabase
         .from('leads')
         .select('id')
@@ -83,7 +110,7 @@ const Contact: React.FC<ContactProps> = ({ showToast }) => {
           }]);
       }
 
-      showToast('Mensagem enviada com sucesso! Entraremos em contato em breve.', 'success');
+      showToast('Mensagem enviada com sucesso! Você receberá um e-mail em breve.', 'success');
       setFormData({
         name: '',
         email: '',
