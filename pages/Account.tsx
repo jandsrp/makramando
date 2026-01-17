@@ -81,7 +81,7 @@ const Account: React.FC<AccountProps> = ({ session, navigateTo }) => {
                             </div>
                         </Reveal>
 
-                        {profile?.role === 'admin' && (
+                        {(profile?.role === 'admin' || profile?.role === 'master_admin') && (
                             <Reveal delay={0.2}>
                                 <button
                                     onClick={() => navigateTo('admin')}

@@ -156,7 +156,7 @@ const Admin: React.FC<AdminProps> = ({ products: initialProducts, setProducts: s
           {activeTab === 'products' && (
             <button
               onClick={() => { setIsAdding(!isAdding); setEditingProduct(null); }}
-              className="bg-primary hover:bg-primary-dark text-black font-bold py-3 px-8 rounded-xl flex items-center gap-2 shadow-lg"
+              className="bg-primary hover:bg-primary-dark text-black font-bold py-3 px-8 rounded-xl flex items-center gap-2 shadow-lg transition-all active:scale-95"
             >
               <span className="material-symbols-outlined">{isAdding ? 'close' : 'add'}</span>
               {isAdding ? 'Cancelar' : 'Novo Produto'}
