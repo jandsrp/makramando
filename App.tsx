@@ -121,7 +121,7 @@ const App: React.FC = () => {
       case 'cart': return <Cart cart={cart} removeFromCart={removeFromCart} updateQuantity={updateQuantity} navigateTo={navigateTo} />;
       case 'checkout': return <Checkout cart={cart} navigateTo={navigateTo} clearCart={clearCart} showToast={showToast} />;
       case 'admin': return <Admin products={products} addProduct={addProduct} setProducts={setProducts} showToast={showToast} />;
-      case 'contact': return <Contact />;
+      case 'contact': return <Contact showToast={showToast} />;
       case 'about': return <About navigateTo={navigateTo} />;
       case 'auth': return <Auth navigateTo={navigateTo} showToast={showToast} />;
       case 'account': return <Account session={session} navigateTo={navigateTo} />;
