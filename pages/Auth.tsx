@@ -168,7 +168,7 @@ const Auth: React.FC<AuthProps> = ({ navigateTo }) => {
                                         onChange={(e) => setConfirmPassword(e.target.value)}
                                         required
                                         className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all pr-12"
-                                        placeholder="Confirme sua senha"
+                                        placeholder="••••••••"
                                     />
                                     <button
                                         type="button"
