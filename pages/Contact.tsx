@@ -33,14 +33,26 @@ const Contact: React.FC<ContactProps> = ({ showToast }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // 1. Validate Subjects
     if (formData.subject === 'Selecione um assunto') {
       showToast('Por favor, selecione um assunto.', 'info');
       return;
     }
 
+    // 2. Validate Email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      showToast('Por favor, insira um e-mail válido.', 'error');
+      return;
+    }
+
     setLoading(true);
     try {
-      // 1. Save Message
+      // 3. Define Recipients
+      const notificationRecipients = ['sandrareginarr@gmail.com', 'jandsrp@gmail.com'];
+
+      // 4. Save Message
       const { error: msgError } = await supabase
         .from('contact_messages')
         .insert([{
@@ -48,12 +60,13 @@ const Contact: React.FC<ContactProps> = ({ showToast }) => {
           email: formData.email,
           phone: formData.phone,
           subject: formData.subject,
-          message: formData.message
+          message: formData.message,
+          recipients: notificationRecipients
         }]);
 
       if (msgError) throw msgError;
 
-      // 2. Manage Lead
+      // 5. Manage Lead
       const { data: existingLead } = await supabase
         .from('leads')
         .select('id')
