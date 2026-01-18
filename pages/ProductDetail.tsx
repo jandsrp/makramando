@@ -7,9 +7,10 @@ interface ProductDetailProps {
   product: Product;
   addToCart: (p: Product, q: number, c?: string, s?: string) => void;
   navigateTo: (v: View) => void;
+  showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
 }
 
-const ProductDetail: React.FC<ProductDetailProps> = ({ product, addToCart, navigateTo }) => {
+const ProductDetail: React.FC<ProductDetailProps> = ({ product, addToCart, navigateTo, showToast }) => {
   // Use images array if available, fallback to single image_url
   const productImages = product.images && product.images.length > 0
     ? product.images
@@ -128,7 +129,11 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, addToCart, navig
                   </button>
                 </div>
                 <button
-                  onClick={() => addToCart(product, quantity)}
+                  onClick={() => {
+                    addToCart(product, quantity);
+                    showToast(`${quantity}x ${product.name} adicionado ao carrinho!`, 'success');
+                    setQuantity(1);
+                  }}
                   className="flex-1 h-14 bg-primary hover:bg-primary-dark text-black font-bold rounded-xl shadow-lg shadow-primary/20 flex items-center justify-center gap-3 transition-transform active:scale-95"
                 >
                   <span className="material-symbols-outlined">shopping_bag</span>

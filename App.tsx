@@ -117,7 +117,7 @@ const App: React.FC = () => {
     switch (currentView) {
       case 'home': return <Home products={products} navigateTo={navigateTo} />;
       case 'shop': return <Shop products={products} navigateTo={navigateTo} />;
-      case 'product': return selectedProduct ? <ProductDetail product={selectedProduct} addToCart={addToCart} navigateTo={navigateTo} /> : <Home products={products} navigateTo={navigateTo} />;
+      case 'product': return selectedProduct ? <ProductDetail product={selectedProduct} addToCart={addToCart} navigateTo={navigateTo} showToast={showToast} /> : <Home products={products} navigateTo={navigateTo} />;
       case 'cart': return <Cart cart={cart} removeFromCart={removeFromCart} updateQuantity={updateQuantity} navigateTo={navigateTo} />;
       case 'checkout': return <Checkout cart={cart} navigateTo={navigateTo} clearCart={clearCart} showToast={showToast} />;
       case 'admin': return <Admin products={products} addProduct={addProduct} setProducts={setProducts} showToast={showToast} />;
