@@ -1,5 +1,16 @@
 import React from 'react';
 import { supabase } from '../services/supabase';
+import emailjs from '@emailjs/browser';
+
+// IMPORTANT: For EmailJS to work, you need:
+// 1. A Service ID (e.g., 'service_xxx')
+// 2. A Template ID (e.g., 'template_xxx')
+// 3. A Public Key (e.g., 'user_xxx')
+// Since these are often public keys meant for client-side, we can hardcode them or use env vars.
+// For now, I'll use a placeholder and notify the user to provide their own or I'll help set them up.
+const EMAILJS_SERVICE_ID = 'service_s8aaw2a';
+const EMAILJS_TEMPLATE_ID = 'template_eoje73s';
+const EMAILJS_PUBLIC_KEY = 'Jqp8DnRa2g0xaUxCX';
 
 interface ContactProps {
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
@@ -49,27 +60,8 @@ const Contact: React.FC<ContactProps> = ({ showToast }) => {
 
     setLoading(true);
     try {
-      // 3. Define Recipients (will be handled by Edge Function + Resend)
-      const notificationRecipients = ['sandrareginarr@gmail.com', 'jandsrp@gmail.com'];
-
-      // 4. Send Email via Supabase Edge Function (Internal Resend)
-      const { error: emailError } = await supabase.functions.invoke('send-contact-email', {
-        body: {
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          subject: formData.subject,
-          message: formData.message,
-          recipients: notificationRecipients
-        }
-      });
-
-      if (emailError) {
-        console.warn('Edge Function email failed:', emailError);
-        // We continue because we still want to save to DB and manage leads
-      }
-
-      // 5. Save Message to Supabase (Backup & Log)
+      // 3. Save Message to Supabase (Backup & Log)
+      // We do this BEFORE sending email to ensure data is captured even if EmailJS fails
       const { error: msgError } = await supabase
         .from('contact_messages')
         .insert([{
@@ -78,12 +70,12 @@ const Contact: React.FC<ContactProps> = ({ showToast }) => {
           phone: formData.phone,
           subject: formData.subject,
           message: formData.message,
-          recipients: notificationRecipients
+          recipients: ['sandrareginarr@gmail.com', 'jandsrp@gmail.com']
         }]);
 
       if (msgError) throw msgError;
 
-      // 6. Manage Lead
+      // 4. Manage Lead
       const { data: existingLead } = await supabase
         .from('leads')
         .select('id')
@@ -100,7 +92,37 @@ const Contact: React.FC<ContactProps> = ({ showToast }) => {
           }]);
       }
 
-      showToast('Mensagem enviada com sucesso! Você receberá um e-mail em breve.', 'success');
+      // 5. Send Email via EmailJS
+      let emailSent = false;
+      try {
+        const result = await emailjs.send(
+          EMAILJS_SERVICE_ID,
+          EMAILJS_TEMPLATE_ID,
+          {
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            title: formData.subject,
+            message: formData.message,
+            recipients: 'sandrareginarr@gmail.com, jandsrp@gmail.com'
+          },
+          EMAILJS_PUBLIC_KEY
+        );
+        console.log('EmailJS Success:', result);
+        emailSent = true;
+      } catch (emailErr: any) {
+        console.error('EmailJS failed:', emailErr);
+        console.error('EmailJS error text:', emailErr?.text || 'No text');
+        console.error('EmailJS error status:', emailErr?.status || 'No status');
+      }
+
+      if (emailSent) {
+        showToast('Mensagem enviada com sucesso! Você receberá um retorno em breve.', 'success');
+      } else {
+        // We STILL show info because the message was saved to DB and WhatsApp is available
+        showToast('Mensagem registrada! (O envio do e-mail falhou, mas já salvamos seu contato)', 'info');
+      }
+
       setFormData({
         name: '',
         email: '',
@@ -114,6 +136,16 @@ const Contact: React.FC<ContactProps> = ({ showToast }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleWhatsAppClick = () => {
+    const message = `Olá! Meu nome é ${formData.name || '(Nome)'}. \n` +
+      `E-mail: ${formData.email || '(E-mail)'}\n` +
+      `Assunto: ${formData.subject}\n` +
+      `Mensagem: ${formData.message || 'Gostaria de falar sobre macramê!'}`;
+
+    const encodedMessage = encodeURIComponent(message);
+    window.open(`https://wa.me/5521997657494?text=${encodedMessage}`, '_blank');
   };
 
   return (
@@ -255,14 +287,26 @@ const Contact: React.FC<ContactProps> = ({ showToast }) => {
                     onChange={e => setFormData({ ...formData, message: e.target.value })}
                   />
                 </label>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="bg-primary hover:bg-primary-dark text-black font-bold py-4 px-10 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg hover:translate-y-[-2px] disabled:opacity-50"
-                >
-                  {loading ? 'Enviando...' : 'Enviar Mensagem'}
-                  <span className="material-symbols-outlined">send</span>
-                </button>
+                <div className="flex flex-col sm:flex-row gap-4 mt-2">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="flex-1 bg-primary hover:bg-primary-dark text-black font-bold py-4 px-8 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg hover:translate-y-[-2px] disabled:opacity-50"
+                  >
+                    {loading ? 'Enviando...' : 'Enviar E-mail'}
+                    <span className="material-symbols-outlined">send</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleWhatsAppClick}
+                    className="flex-1 bg-[#25D366] hover:bg-[#128C7E] text-white font-bold py-4 px-8 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg hover:translate-y-[-2px]"
+                  >
+                    Conversar no WhatsApp
+                    <svg className="size-5 fill-current" viewBox="0 0 24 24">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+                    </svg>
+                  </button>
+                </div>
               </form>
             </div>
           </div>
