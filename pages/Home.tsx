@@ -76,7 +76,7 @@ const Home: React.FC<HomeProps> = ({ products, navigateTo }) => {
             </div>
             <h2 className="text-3xl md:text-4xl font-black tracking-tight dark:text-white">Cada nó conta uma história</h2>
             <p className="text-lg text-gray-600 dark:text-gray-300 italic">
-              "Na Makramando, acreditamos que a decoração deve ter alma. Cada peça é feita 100% à mão com algodão orgânico, transformando ambientes frios em lares acolhedores."
+              "No Makramando, acreditamos que a decoração deve ter alma. Cada peça é feita 100% à mão com algodão orgânico, transformando ambientes frios em lares acolhedores."
             </p>
             <button
               onClick={() => navigateTo('about')}
