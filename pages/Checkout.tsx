@@ -2,6 +2,12 @@ import React from 'react';
 import { CartItem, View } from '../types';
 import { supabase } from '../services/supabase';
 import { Reveal } from '../components/UI/Reveal';
+import emailjs from '@emailjs/browser';
+
+// EmailJS Configuration (same as Contact.tsx)
+const EMAILJS_SERVICE_ID = 'service_s8aaw2a';
+const EMAILJS_TEMPLATE_ID = 'template_eoje73s';
+const EMAILJS_PUBLIC_KEY = 'Jqp8DnRa2g0xaUxCX';
 
 interface CheckoutProps {
   cart: CartItem[];
@@ -13,25 +19,40 @@ interface CheckoutProps {
 const Checkout: React.FC<CheckoutProps> = ({ cart, navigateTo, clearCart, showToast }) => {
   const [loading, setLoading] = React.useState(false);
   const [session, setSession] = React.useState<any>(null);
+  const [userProfile, setUserProfile] = React.useState<any>(null);
   const [checkingAuth, setCheckingAuth] = React.useState(true);
   const total = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
-  // Check authentication on mount
+  // Check authentication on mount and fetch user profile
   React.useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
-      setCheckingAuth(false);
 
       if (!session) {
         showToast('Você precisa estar logado para finalizar a compra.', 'info');
         navigateTo('auth');
+      } else {
+        // Fetch user profile
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        setUserProfile(profile);
       }
+      setCheckingAuth(false);
     };
     checkAuth();
   }, [navigateTo]);
 
-  const handleConfirmPayment = async () => {
+  const formatOrderItemsForEmail = (items: CartItem[]) => {
+    return items.map(item =>
+      `• ${item.quantity}x ${item.name} - R$ ${(item.price * item.quantity).toFixed(2)}`
+    ).join('\n');
+  };
+
+  const handleSendOrder = async () => {
     if (cart.length === 0) return;
     setLoading(true);
 
@@ -39,23 +60,25 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, navigateTo, clearCart, showTo
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
-        showToast('Por favor, faça login para finalizar a compra.', 'info');
+        showToast('Por favor, faça login para enviar o pedido.', 'info');
         navigateTo('auth');
         return;
       }
 
+      // 1. Create order with status 'em_analise'
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
           user_id: session.user.id,
           total_amount: total,
-          status: 'pending'
+          status: 'em_analise'
         })
         .select()
         .single();
 
       if (orderError) throw orderError;
 
+      // 2. Insert order items
       const orderItems = cart.map(item => ({
         order_id: order.id,
         product_id: item.id,
@@ -69,7 +92,55 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, navigateTo, clearCart, showTo
 
       if (itemsError) throw itemsError;
 
-      showToast('Pedido realizado com sucesso!', 'success');
+      // 3. Send email notification via EmailJS
+      const orderItemsText = formatOrderItemsForEmail(cart);
+      const orderDate = new Date().toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      try {
+        await emailjs.send(
+          EMAILJS_SERVICE_ID,
+          EMAILJS_TEMPLATE_ID,
+          {
+            name: userProfile?.full_name || session.user.email,
+            email: session.user.email,
+            phone: userProfile?.phone || 'Não informado',
+            title: `Novo Pedido #${order.id.slice(0, 8)}`,
+            message: `
+📦 NOVO PEDIDO RECEBIDO
+
+👤 DADOS DO CLIENTE:
+Nome: ${userProfile?.full_name || 'Não informado'}
+Email: ${session.user.email}
+Telefone: ${userProfile?.phone || 'Não informado'}
+
+🛒 ITENS DO PEDIDO:
+${orderItemsText}
+
+💰 TOTAL: R$ ${total.toFixed(2)}
+
+📅 Data: ${orderDate}
+🔖 ID do Pedido: #${order.id.slice(0, 8)}
+📊 Status: Em Análise
+
+---
+Este pedido foi enviado automaticamente pelo site Makramando.
+            `.trim()
+          },
+          EMAILJS_PUBLIC_KEY
+        );
+        console.log('Email de pedido enviado com sucesso!');
+      } catch (emailErr) {
+        console.error('Erro ao enviar email do pedido:', emailErr);
+        // Continue mesmo se o email falhar - o pedido foi salvo
+      }
+
+      showToast('Pedido enviado com sucesso! Entraremos em contato em breve.', 'success');
       await clearCart();
       navigateTo('home');
     } catch (error) {
@@ -104,7 +175,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, navigateTo, clearCart, showTo
           <div className="space-y-4 text-center">
             <h1 className="text-4xl font-black tracking-tight dark:text-white">Quase lá!</h1>
             <p className="text-lg text-gray-500 max-w-lg mx-auto">
-              Finalize seu pedido e leve a arte do macramê para sua casa.
+              Finalize seu pedido e leve a arte do macramê para sua casa. Finalize seu pedido, entraremos em contato, ou se preferir nos chame pelo Whatsapp.
             </p>
           </div>
         </div>
@@ -126,16 +197,18 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, navigateTo, clearCart, showTo
             <span className="text-2xl font-black text-primary">R$ {total.toFixed(2)}</span>
           </div>
           <button
-            onClick={handleConfirmPayment}
+            onClick={handleSendOrder}
             disabled={loading || cart.length === 0}
-            className="w-full bg-primary hover:bg-primary-dark text-black font-bold py-4 rounded-xl mt-6 shadow-lg shadow-primary/20 disabled:opacity-50"
+            className="w-full bg-primary hover:bg-primary-dark text-black font-bold py-4 rounded-xl mt-6 shadow-lg shadow-primary/20 disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {loading ? 'Processando...' : 'Confirmar Pagamento'}
+            <span className="material-symbols-outlined">send</span>
+            {loading ? 'Enviando...' : 'Enviar Pedido'}
           </button>
         </div>
       </Reveal>
 
       <Reveal delay={0.2} width="fit-content">
+
         <button
           onClick={() => navigateTo('cart')}
           className="text-gray-500 hover:text-primary font-bold flex items-center gap-2"
@@ -149,3 +222,4 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, navigateTo, clearCart, showTo
 };
 
 export default Checkout;
+

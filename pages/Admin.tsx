@@ -242,9 +242,16 @@ const Admin: React.FC<AdminProps> = ({ products: initialProducts, setProducts: s
                       <td className="px-6 py-4 font-bold text-primary">R$ {o.total_amount.toFixed(2)}</td>
                       <td className="px-6 py-4 text-center">
                         <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${o.status === 'paid' ? 'bg-green-100 text-green-700' :
-                          o.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700'
+                            o.status === 'em_analise' ? 'bg-blue-100 text-blue-700' :
+                              o.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                                o.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                                  'bg-gray-100 text-gray-700'
                           }`}>
-                          {o.status}
+                          {o.status === 'em_analise' ? 'Em Análise' :
+                            o.status === 'pending' ? 'Pendente' :
+                              o.status === 'paid' ? 'Pago' :
+                                o.status === 'cancelled' ? 'Cancelado' :
+                                  o.status}
                         </span>
                       </td>
                     </tr>

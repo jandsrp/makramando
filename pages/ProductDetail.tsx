@@ -136,7 +136,13 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, addToCart, navig
                 </button>
               </div>
             </div>
-
+            <div className="bg-primary/5 p-4 rounded-xl flex items-start gap-4">
+              <span className="material-symbols-outlined text-primary">eco</span>
+              <div>
+                <p className="font-bold text-sm dark:text-white">Pedidos</p>
+                <p className="text-xs text-gray-500">Todas as nossas peças são feitas por encomenda, coloque no carrinho e ao finalizar seu pedido será enviado um email para nós, entraremos em contato em até um dia, ou se preferir entre em contato pelo whatsapp.</p>
+              </div>
+            </div>
             <div className="bg-primary/5 p-4 rounded-xl flex items-start gap-4">
               <span className="material-symbols-outlined text-primary">eco</span>
               <div>
